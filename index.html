@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Đặt giao diện trước khi trang hiển thị để không bị nháy màu: lựa chọn đã lưu, nếu chưa có thì theo hệ thống.
+      (function () {
+        var theme = null;
+        try {
+          theme = localStorage.getItem("travel-plan-theme");
+        } catch (err) {}
+        if (theme !== "light" && theme !== "dark")
+          theme = matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+    <title>Chuyến đi của tôi</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⛰️%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <!-- Ảnh bìa + ngân sách -->
+      <header class="hero">
+        <div class="hero-photos" aria-hidden="true">
+          <div class="hero-photo" data-place="hanoi"></div>
+          <div class="hero-photo" data-place="hagiang"></div>
+        </div>
+        <svg
+          class="hero-art"
+          viewBox="0 0 400 220"
+          preserveAspectRatio="xMidYMax slice"
+          aria-hidden="true"
+        >
+          <circle cx="282" cy="58" r="22" fill="#ffd98a" opacity=".9" />
+          <circle cx="282" cy="58" r="36" fill="#ffd98a" opacity=".18" />
+          <path
+            d="M110 54c8-6 20-6 26 2 8-2 16 4 14 10H102c-2-6 2-11 8-12z"
+            fill="#fff"
+            opacity=".35"
+          />
+          <path
+            d="M200 26c6-5 15-4 19 2 6-1 12 3 11 8h-36c-1-5 2-9 6-10z"
+            fill="#fff"
+            opacity=".25"
+          />
+          <path
+            d="M0 150 L50 92 L88 128 L140 70 L196 132 L240 96 L300 140 L352 88 L400 124 V220 H0Z"
+            fill="#ffffff"
+            opacity=".16"
+          />
+          <path
+            d="M140 70 L154 86 L146 84 L140 92 L132 82 L126 86Z"
+            fill="#fff"
+            opacity=".55"
+          />
+          <path
+            d="M352 88 L364 102 L356 100 L350 106 L344 98 L340 101Z"
+            fill="#fff"
+            opacity=".5"
+          />
+          <path
+            d="M0 176 L62 126 L110 162 L170 114 L232 168 L292 122 L346 160 L400 134 V220 H0Z"
+            fill="#0b4f4a"
+            opacity=".55"
+          />
+          <path
+            d="M0 200 C60 170 110 196 170 182 S290 160 400 186 V220 H0Z"
+            fill="#06332f"
+            opacity=".75"
+          />
+          <path
+            d="M90 220 C140 204 120 196 180 190 S250 184 270 176"
+            stroke="#ffd98a"
+            stroke-width="3"
+            stroke-dasharray="7 7"
+            fill="none"
+            opacity=".75"
+          />
+        </svg>
+
+        <div class="hero-top">
+          <span class="countdown" id="countdown"></span>
+          <div class="hero-buttons">
+            <button
+              type="button"
+              class="icon-btn glass"
+              id="themeToggle"
+              data-action="toggle-theme"
+            ></button>
+            <button
+              type="button"
+              class="icon-btn glass"
+              data-action="edit-trip"
+              aria-label="Sửa chuyến đi"
+              title="Sửa chuyến đi"
+            >
+              ✎
+            </button>
+          </div>
+        </div>
+        <h1 id="tripName"></h1>
+        <p class="trip-dates" id="tripDates"></p>
+
+        <section
+          class="summary glass"
+          id="summary"
+          aria-label="Tóm tắt ngân sách"
+        ></section>
+      </header>
+
+      <nav class="tabs" role="tablist" aria-label="Chuyên mục">
+        <button
+          type="button"
+          role="tab"
+          id="tab-plan"
+          aria-controls="panel-plan"
+          data-action="tab"
+          data-tab="plan"
+        >
+          <span aria-hidden="true">🗺️</span>Kế hoạch
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-expenses"
+          aria-controls="panel-expenses"
+          data-action="tab"
+          data-tab="expenses"
+        >
+          <span aria-hidden="true">🧾</span>Chi tiêu
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-budget"
+          aria-controls="panel-budget"
+          data-action="tab"
+          data-tab="budget"
+        >
+          <span aria-hidden="true">💰</span>Ngân sách
+        </button>
+      </nav>
+
+      <!-- Kế hoạch -->
+      <section
+        class="panel"
+        id="panel-plan"
+        role="tabpanel"
+        aria-labelledby="tab-plan"
+      >
+        <div class="day-nav">
+          <button
+            type="button"
+            class="icon-btn"
+            data-action="prev-day"
+            aria-label="Ngày trước"
+          >
+            ‹
+          </button>
+          <div class="chips" id="dayChips"></div>
+          <button
+            type="button"
+            class="icon-btn"
+            data-action="next-day"
+            aria-label="Ngày sau"
+          >
+            ›
+          </button>
+        </div>
+        <div class="section-head">
+          <div>
+            <h2 id="dayTitle"></h2>
+            <p class="muted" id="dayProgress"></p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-action="add-activity"
+          >
+            + Thêm
+          </button>
+        </div>
+        <ol class="timeline" id="activityList"></ol>
+      </section>
+
+      <!-- Ngân sách -->
+      <section
+        class="panel"
+        id="panel-budget"
+        role="tabpanel"
+        aria-labelledby="tab-budget"
+      >
+        <div class="card budget-card" id="budgetStatus"></div>
+        <form class="card" id="budgetForm">
+          <label class="field-label" for="budgetInput"
+            >Tổng ngân sách chuyến đi</label
+          >
+          <div class="input-row">
+            <div class="money-field">
+              <input
+                id="budgetInput"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                required
+              />
+              <span>₫</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Lưu</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Chi tiêu -->
+      <section
+        class="panel"
+        id="panel-expenses"
+        role="tabpanel"
+        aria-labelledby="tab-expenses"
+      >
+        <form class="card quick-add" id="quickExpenseForm" novalidate>
+          <h2>Thêm khoản chi</h2>
+          <input
+            name="name"
+            type="text"
+            maxlength="120"
+            placeholder="Tên khoản chi, ví dụ: cà phê"
+            autocomplete="off"
+            required
+            aria-label="Tên khoản chi"
+          />
+          <div class="input-row">
+            <div class="money-field">
+              <input
+                name="amount"
+                type="text"
+                inputmode="numeric"
+                placeholder="Số tiền"
+                autocomplete="off"
+                required
+                aria-label="Số tiền"
+              />
+              <span>₫</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Thêm</button>
+          </div>
+          <label class="date-line"
+            >Ngày chi
+            <input name="date" type="date" required />
+          </label>
+          <p class="form-error" role="alert"></p>
+        </form>
+
+        <div class="history-head">
+          <h2>Lịch sử chi tiêu</h2>
+          <select id="expenseDay" aria-label="Lọc chi tiêu theo ngày"></select>
+        </div>
+        <section
+          class="card stats"
+          id="expenseStats"
+          aria-live="polite"
+        ></section>
+        <div id="expenseList"></div>
+      </section>
+    </main>
+
+    <!-- Biểu mẫu hoạt động -->
+    <dialog id="activityDialog">
+      <form id="activityForm" novalidate>
+        <h2 id="activityDialogTitle"></h2>
+        <label
+          >Ngày
+          <input name="date" type="date" required />
+        </label>
+        <div class="row-2">
+          <label
+            >Bắt đầu
+            <input name="start" type="time" required />
+          </label>
+          <label
+            >Kết thúc
+            <input name="end" type="time" required />
+          </label>
+        </div>
+        <label
+          >Hoạt động
+          <input
+            name="name"
+            type="text"
+            maxlength="120"
+            placeholder="Đi đâu, làm gì?"
+            required
+          />
+        </label>
+        <label
+          >Địa điểm
+          <input
+            name="place"
+            type="text"
+            maxlength="120"
+            placeholder="Ví dụ: Homestay Hà Giang"
+            required
+          />
+        </label>
+        <label
+          >Link Google Maps (tùy chọn)
+          <input
+            name="mapUrl"
+            type="text"
+            inputmode="url"
+            maxlength="2000"
+            placeholder="Dán link chia sẻ từ Google Maps"
+            autocomplete="off"
+          />
+          <small class="hint"
+            >Để trống thì nút bản đồ sẽ tìm theo tên địa điểm.</small
+          >
+        </label>
+        <label
+          >Ghi chú (tùy chọn)
+          <textarea name="note" rows="2" maxlength="500"></textarea>
+        </label>
+        <p class="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-action="close-dialog">
+            Hủy
+          </button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Biểu mẫu sửa khoản chi -->
+    <dialog id="expenseDialog">
+      <form id="expenseForm" novalidate>
+        <h2>Sửa khoản chi</h2>
+        <label
+          >Tên khoản chi
+          <input
+            name="name"
+            type="text"
+            maxlength="120"
+            autocomplete="off"
+            required
+          />
+        </label>
+        <label
+          >Số tiền
+          <div class="money-field">
+            <input
+              name="amount"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              required
+            />
+            <span>₫</span>
+          </div>
+        </label>
+        <label
+          >Ngày chi
+          <input name="date" type="date" required />
+        </label>
+        <label
+          >Ghi chú (tùy chọn)
+          <textarea name="note" rows="2" maxlength="500"></textarea>
+        </label>
+        <p class="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-action="close-dialog">
+            Hủy
+          </button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Biểu mẫu chuyến đi -->
+    <dialog id="tripDialog">
+      <form id="tripForm" novalidate>
+        <h2>Sửa chuyến đi</h2>
+        <label
+          >Tên chuyến đi
+          <input name="name" type="text" maxlength="80" required />
+        </label>
+        <div class="row-2">
+          <label
+            >Ngày đi
+            <input name="start" type="date" required />
+          </label>
+          <label
+            >Ngày về
+            <input name="end" type="date" required />
+          </label>
+        </div>
+        <p class="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-action="close-dialog">
+            Hủy
+          </button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Xác nhận xóa -->
+    <dialog id="confirmDialog" class="confirm">
+      <form method="dialog">
+        <div class="confirm-icon" aria-hidden="true">🗑️</div>
+        <h2 id="confirmTitle"></h2>
+        <p id="confirmMessage"></p>
+        <div class="dialog-actions">
+          <button type="submit" class="btn" value="cancel">Hủy</button>
+          <button type="submit" class="btn btn-danger" value="ok">Xóa</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
